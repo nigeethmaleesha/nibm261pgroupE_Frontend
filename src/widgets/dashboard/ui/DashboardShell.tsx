@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, ChevronDown, LogOut, Menu, UserRound, Wrench, X } from "lucide-react";
+import { Bell, ChevronDown, FileText, LogOut, Menu, UserRound, Wrench, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/src/shared/auth/AuthProvider";
 import { BrandLogo } from "@/src/shared/ui/BrandLogo";
@@ -103,6 +104,10 @@ function NavContent({ onLogout, loggingOut }: { onLogout: () => void; loggingOut
           <Wrench className="h-4.5 w-4.5" />
           Dashboard
         </div>
+        <Link href="/repair-jobs/estimate" className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-extrabold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">
+          <FileText className="h-4.5 w-4.5" />
+          Current estimate
+        </Link>
         <div className="flex cursor-default items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-slate-400">
           <UserRound className="h-4.5 w-4.5" />
           My repair jobs
