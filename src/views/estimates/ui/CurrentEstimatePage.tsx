@@ -79,6 +79,7 @@ function CurrentEstimateContent() {
     try {
       const response = await submitEstimateDecision(data.job.id, {
         action,
+        estimateId: data.estimate.id,
         versionNumber: data.estimate.versionNumber,
         total: data.estimate.total,
       });

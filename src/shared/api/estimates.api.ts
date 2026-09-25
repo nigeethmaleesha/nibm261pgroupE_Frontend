@@ -13,7 +13,12 @@ export function getCurrentEstimate(jobIdentifier: string) {
 
 export function submitEstimateDecision(
   jobIdentifier: string,
-  payload: { action: "APPROVE" | "REJECT"; versionNumber: number; total: string },
+  payload: {
+    action: "APPROVE" | "REJECT";
+    estimateId: string;
+    versionNumber: number;
+    total: string;
+  },
 ) {
   return requestJson<EstimateDecisionResponse>(
     `/jobs/${encodeURIComponent(jobIdentifier.trim())}/estimate-decision`,
