@@ -2,7 +2,7 @@
 
 Customer-facing frontend for the NIBM Agile coursework RepairFlow project.
 
-## Implemented now
+## Implemented Features
 
 - Customer registration with frontend validation
 - Registration OTP verification and resend cooldown
@@ -17,18 +17,24 @@ Customer-facing frontend for the NIBM Agile coursework RepairFlow project.
 - Secure logout
 - Responsive blue/white RepairFlow UI and vector brand mark
 - Same-origin Next.js API proxy to avoid browser CORS/cookie problems during local development
+- **Repair Estimate Lookup** (`/repair-jobs/estimate`) for searching repair jobs by reference
+- **Current Repair Job Estimate Review & Decision Portal** (`/repair-jobs/[jobIdentifier]/estimate`):
+  - Live Repair Job Estimate UI with hardware metadata and technician intake diagnostic callout box
+  - Estimate versioning metrics (Version, Issued Timestamp, Estimate Total)
+  - Proposed Scope of Work pills & Itemised amounts breakdown table with warranty details
+  - Dark Navy status & final estimated total summary bar
+  - Customer decision authorization banner (**Approve Estimate** / **Reject / Request Revision**)
+  - PDF export & printing capability
+  - Service Helpline integration and 4 Trust Guarantee badges (90-Day Warranty, OEM Grade Quality, No Hidden Fees, Express Turnaround)
 
-The repair-job/current-estimate data area is intentionally a backend-ready placeholder because those API contracts are owned by other coursework modules and should not be guessed.
+## Tech Stack
 
-## Tech stack
+- **Framework**: Next.js 16 (App Router)
+- **UI & Styling**: React 19, TypeScript, Tailwind CSS 4, Lucide Icons
+- **Authentication**: JWT with HttpOnly Refresh Cookies & Access Token auto-rotation
+- **Backend API Proxy**: Express/MongoDB backend proxy via `/api`
 
-- Next.js 16 App Router
-- React 19 + TypeScript
-- Tailwind CSS 4
-- Lucide icons
-- Express/MongoDB backend through `/api` proxy
-
-## Run locally
+## Run Locally
 
 1. Start the RepairFlow backend on `http://localhost:5000`.
 2. Confirm the frontend `.env` contains:
@@ -38,7 +44,7 @@ NEXT_PUBLIC_API_BASE_URL=/api
 BACKEND_API_BASE_URL=http://localhost:5000/api
 ```
 
-3. Install and run:
+3. Install dependencies and run development server:
 
 ```bash
 npm install
@@ -49,18 +55,20 @@ npm run dev
 
 Because the browser calls the Next.js `/api` proxy instead of the Express server directly, the frontend works with the backend HttpOnly cookies without exposing JWTs to JavaScript. This also means local browser CORS configuration is not required for normal frontend use.
 
-## Main routes
+## Main Routes
 
-- `/login`
-- `/login/verify-otp`
-- `/register`
-- `/register/verify-otp`
-- `/forgot-password`
-- `/forgot-password/verify-otp`
-- `/forgot-password/reset`
-- `/dashboard`
+- `/login` — Customer login
+- `/login/verify-otp` — Login 2FA verification
+- `/register` — Customer registration
+- `/register/verify-otp` — Registration email verification
+- `/forgot-password` — Password reset initiation
+- `/forgot-password/verify-otp` — Password reset OTP verification
+- `/forgot-password/reset` — Set new password
+- `/dashboard` — Protected customer dashboard
+- `/repair-jobs/estimate` — Repair estimate reference lookup
+- `/repair-jobs/[jobIdentifier]/estimate` — Customer current estimate review & decision portal
 
-## Backend endpoints used
+## Backend Endpoints Used
 
 - `POST /api/auth/register`
 - `POST /api/auth/register/verify-otp`
@@ -75,5 +83,7 @@ Because the browser calls the Next.js `/api` proxy instead of the Express server
 - `POST /api/auth/refresh-token`
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
+- `GET /api/customer/jobs/:jobIdentifier/current-estimate`
+- `POST /api/jobs/:jobIdentifier/estimate-decision`
 
-See `docs/BACKEND_INTEGRATION.md` for the full flow.
+See `docs/BACKEND_INTEGRATION.md` for the full authentication and estimate integration details.
