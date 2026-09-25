@@ -28,3 +28,10 @@ export function submitEstimateDecision(
     },
   );
 }
+
+export function getEstimateHistory(jobIdentifier: string) {
+  return requestJson<import("@/src/shared/types/estimates").EstimateHistoryResponse>(
+    `/jobs/${encodeURIComponent(jobIdentifier.trim())}/estimates/history`,
+    { method: "GET" },
+  );
+}

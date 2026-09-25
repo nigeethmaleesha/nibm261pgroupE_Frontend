@@ -6,6 +6,7 @@ import {
   Calendar,
   Clock3,
   Cpu,
+  History,
   Info,
   Printer,
   Receipt,
@@ -17,10 +18,17 @@ import {
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { getCurrentEstimate, submitEstimateDecision } from "@/src/shared/api/estimates.api";
+import {
+  getCurrentEstimate,
+  getEstimateHistory,
+  submitEstimateDecision,
+} from "@/src/shared/api/estimates.api";
 import { ApiError } from "@/src/shared/api/http";
 import { ProtectedRoute } from "@/src/shared/auth/ProtectedRoute";
-import type { CurrentEstimateResponse } from "@/src/shared/types/estimates";
+import type {
+  CurrentEstimateResponse,
+  EstimateHistoryResponse,
+} from "@/src/shared/types/estimates";
 import { InlineAlert } from "@/src/shared/ui/InlineAlert";
 import { LoadingScreen } from "@/src/shared/ui/LoadingScreen";
 import { useToast } from "@/src/shared/ui/ToastProvider";
@@ -42,6 +50,8 @@ function CurrentEstimateContent() {
 
   const toast = useToast();
   const [data, setData] = useState<CurrentEstimateResponse | null>(null);
+  const [history, setHistory] = useState<EstimateHistoryResponse | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -52,7 +62,12 @@ function CurrentEstimateContent() {
     setError("");
 
     try {
-      setData(await getCurrentEstimate(jobIdentifier));
+      const [estRes, histRes] = await Promise.all([
+        getCurrentEstimate(jobIdentifier),
+        getEstimateHistory(jobIdentifier).catch(() => null),
+      ]);
+      setData(estRes);
+      setHistory(histRes);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Unable to load the current estimate.");
     } finally {
@@ -105,7 +120,7 @@ function CurrentEstimateContent() {
         {/* Top Service Helpline & Secure View Bar */}
         <div className="flex items-center justify-between border-b border-slate-200/60 pb-3">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
               Service Helpline
             </span>
             <a
@@ -132,7 +147,29 @@ function CurrentEstimateContent() {
           </Link>
 
           <div className="flex items-center gap-2.5">
-           
+            {history?.versions && history.versions.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowHistory((prev) => !prev)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+              >
+                <History className="h-4 w-4 text-slate-500" />
+                {showHistory ? "Hide History" : "Estimate History"}
+                {history.versions.length > 1 && (
+                  <span className="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-black text-blue-700">
+                    {history.versions.length}
+                  </span>
+                )}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            >
+              <Printer className="h-4 w-4 text-slate-500" /> Print / PDF
+            </button>
             <button
               type="button"
               onClick={() => void load()}
@@ -147,12 +184,12 @@ function CurrentEstimateContent() {
         {/* Main Title Banner */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-[-0.03em] text-slate-950">
+            <h1 className="text-2xl font-black tracking-[-0.03em] text-slate-950 sm:text-3xl">
               Repair Job Estimate
             </h1>
-            <p className="mt-1 text-xs sm:text-sm font-medium text-slate-500">
+            <p className="mt-1 text-xs font-medium text-slate-500 sm:text-sm">
               Review and manage the latest estimate for job reference{" "}
-              <span className="rounded-md bg-slate-100 px-2 py-0.5 font-bold font-mono text-slate-800">
+              <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono font-bold text-slate-800">
                 {data?.job?.reference || jobIdentifier}
               </span>
             </p>
@@ -160,13 +197,122 @@ function CurrentEstimateContent() {
 
           {isActionRequired && (
             <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3.5 py-1.5 text-xs font-black text-amber-700">
-              <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+              <span className="h-2 w-2 animate-pulse rounded-full bg-amber-500" />
               ACTION REQUIRED
             </div>
           )}
         </div>
 
         {error && <InlineAlert>{error}</InlineAlert>}
+
+        {/* Estimate Revision History Drawer / Section (SCRUM-19) */}
+        {showHistory && history && history.versions && history.versions.length > 0 && (
+          <section className="space-y-5 rounded-[24px] border border-blue-200 bg-blue-50/30 p-6 shadow-[0_16px_45px_rgba(15,23,42,0.04)] sm:p-7">
+            <div className="flex items-center justify-between border-b border-blue-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm">
+                  <History className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-black text-slate-900">Estimate Version History</h2>
+                  <p className="text-xs font-semibold text-slate-500">
+                    Chronological audit of all issued estimate versions and decisions
+                  </p>
+                </div>
+              </div>
+              <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-700">
+                {history.versions.length} Version{history.versions.length === 1 ? "" : "s"}
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {history.versions.map((version) => (
+                <div
+                  key={version.id}
+                  className={`rounded-2xl border p-5 transition ${
+                    version.isCurrent
+                      ? "border-blue-200 bg-white shadow-sm"
+                      : "border-slate-200/80 bg-white/70"
+                  }`}
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <span className="text-sm font-black text-slate-900">
+                        Version {version.versionNumber}
+                      </span>
+                      {version.isCurrent ? (
+                        <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-black uppercase text-blue-700">
+                          Current Version
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase text-slate-600">
+                          {version.status || "Superseded"}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-4 text-xs">
+                      <span className="font-semibold text-slate-400">
+                        Issued {formatReceivedDate(version.issuedAt)}
+                      </span>
+                      <span className="font-black text-slate-900">
+                        {version.currency} {version.total}
+                      </span>
+                    </div>
+                  </div>
+
+                  {version.changeReason && (
+                    <div className="mt-3 rounded-xl border border-slate-200/80 bg-slate-50/70 p-3 text-xs">
+                      <span className="font-bold text-slate-700">Reason for Revision: </span>
+                      <span className="font-semibold text-slate-600">{version.changeReason}</span>
+                    </div>
+                  )}
+
+                  {version.decision?.action && (
+                    <div className="mt-3 flex items-center gap-2 text-xs font-bold">
+                      <span
+                        className={
+                          version.decision.action === "APPROVED"
+                            ? "text-emerald-600"
+                            : "text-rose-600"
+                        }
+                      >
+                        • Customer Decision: {version.decision.action}
+                      </span>
+                      {version.decision.decidedAt && (
+                        <span className="font-normal text-slate-400">
+                          on {formatReceivedDate(version.decision.decidedAt)}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-4 border-t border-slate-100 pt-3">
+                    <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      Line Items ({version.items.length})
+                    </p>
+                    <div className="space-y-1.5">
+                      {version.items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between text-xs font-medium text-slate-700"
+                        >
+                          <span>
+                            <span className="font-bold text-slate-900">[{item.type}]</span>{" "}
+                            {item.description} (×{item.quantity})
+                          </span>
+                          <span className="font-bold text-slate-900">
+                            {version.currency} {item.lineTotal}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {data && (
           <>
@@ -187,7 +333,7 @@ function CurrentEstimateContent() {
                   <div className="flex items-center gap-2">
                     <Smartphone className="h-4 w-4 text-slate-400" />
                     <div>
-                      <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">
                         Device Type
                       </p>
                       <p>{data.job.deviceType}</p>
@@ -197,7 +343,7 @@ function CurrentEstimateContent() {
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-slate-400" />
                     <div>
-                      <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">
                         Received Date
                       </p>
                       <p>{formatReceivedDate(data.job.receivedAt)}</p>

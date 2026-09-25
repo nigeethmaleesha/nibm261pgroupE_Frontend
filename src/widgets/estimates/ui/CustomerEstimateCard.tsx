@@ -105,6 +105,19 @@ export function CustomerEstimateCard({
           </div>
         </div>
 
+        {/* Revision Reason Callout (SCRUM-18) */}
+        {estimate.changeReason && (
+          <div className="mt-5 flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50/70 p-4">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+              <Info className="h-4 w-4" />
+            </div>
+            <div className="text-xs leading-5">
+              <span className="font-black text-blue-900">Reason for Revision: </span>
+              <span className="font-semibold text-blue-800">{estimate.changeReason}</span>
+            </div>
+          </div>
+        )}
+
         {/* Proposed Scope of Work */}
         {scopeOfWork.length > 0 && (
           <div className="mt-7">

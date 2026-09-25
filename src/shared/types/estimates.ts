@@ -63,3 +63,21 @@ export type EstimateDecisionResponse = {
   jobStatus: string;
   estimateStatus: string;
 };
+
+export type EstimateVersionHistoryItem = CustomerEstimate & {
+  isCurrent: boolean;
+  changeReason?: string | null;
+  supersededBy?: string | null;
+  supersededAt?: string | null;
+};
+
+export type EstimateHistoryResponse = {
+  job: {
+    id: string;
+    reference: string;
+    status: string;
+    revision: number;
+  };
+  currentVersionNumber: number | null;
+  versions: EstimateVersionHistoryItem[];
+};
