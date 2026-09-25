@@ -7,6 +7,7 @@ import {
   FileText,
   Info,
   ShieldCheck,
+  Sparkles,
   X,
   XCircle,
 } from "lucide-react";
@@ -33,6 +34,9 @@ export function CustomerEstimateCard({
       ? estimate.proposedWork
       : estimate.items.map((item) => item.description);
 
+  const isRevision = estimate.versionNumber > 1 || Boolean(estimate.isRevision);
+  const changeReason = estimate.changeReason || estimate.revisionReason;
+
   return (
     <div className="space-y-6">
       {/* Main Issued Estimate Card */}
@@ -45,7 +49,7 @@ export function CustomerEstimateCard({
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-400">
-                Issued Repair Estimate
+                {isRevision ? "Issued Revised Estimate" : "Issued Repair Estimate"}
               </p>
               <h2 className="mt-0.5 text-lg font-black tracking-[-0.02em] text-slate-950">
                 Estimate Version {estimate.versionNumber}
@@ -53,7 +57,12 @@ export function CustomerEstimateCard({
             </div>
           </div>
 
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
+            {isRevision && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-extrabold text-violet-700">
+                <Sparkles className="h-3.5 w-3.5 text-violet-600" /> Revised Quote
+              </span>
+            )}
             {isAwaiting && (
               <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3.5 py-1.5 text-xs font-bold text-amber-700">
                 Awaiting Customer Approval
@@ -105,16 +114,43 @@ export function CustomerEstimateCard({
           </div>
         </div>
 
-        {/* Revision Reason Callout (SCRUM-18) */}
-        {estimate.changeReason && (
-          <div className="mt-5 flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50/70 p-4">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-              <Info className="h-4 w-4" />
-            </div>
-            <div className="text-xs leading-5">
-              <span className="font-black text-blue-900">Reason for Revision: </span>
-              <span className="font-semibold text-blue-800">{estimate.changeReason}</span>
-            </div>
+        {/* Revision Details & Scope Fallback Banners */}
+        {isRevision && (
+          <div className="mt-5 space-y-3">
+            {changeReason && (
+              <div className="flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50/70 p-4">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                  <Info className="h-4 w-4" />
+                </div>
+                <div className="text-xs leading-5">
+                  <span className="font-black text-blue-900">Reason for Revision (v{estimate.versionNumber}): </span>
+                  <span className="font-semibold text-blue-800">{changeReason}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Scope Fallback Notice when customer has a previously approved estimate */}
+            {estimate.previouslyApprovedEstimate ? (
+              <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-xs leading-5 text-emerald-950 shadow-sm">
+                <ShieldCheck className="h-5 w-5 shrink-0 text-emerald-600 mt-0.5" />
+                <div>
+                  <span className="font-black text-emerald-900">Authorised Scope Fallback Notice: </span>
+                  <span className="font-medium text-emerald-800">
+                    If you <strong>reject</strong> or choose not to approve this revised estimate (Version {estimate.versionNumber}), repair work will continue strictly under your <strong>previously approved Version {estimate.previouslyApprovedEstimate.versionNumber} ({estimate.currency} {formatMoney(estimate.previouslyApprovedEstimate.total)})</strong>. Newly added items will not be performed without your authorization.
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-xs leading-5 text-amber-950">
+                <AlertCircle className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
+                <div>
+                  <span className="font-black text-amber-900">Revision Authorisation Notice: </span>
+                  <span className="font-medium text-amber-800">
+                    If you reject or do not approve this revised estimate, further repair work will remain paused until an estimate is approved or device collection is arranged.
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -138,12 +174,19 @@ export function CustomerEstimateCard({
           </div>
         )}
 
-        {/* Itemised Amounts Breakdown Table */}
+        {/* Itemised Amounts Breakdown Table with Highlighted Changes */}
         <div className="mt-8">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <p className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-400">
-              Itemised Amounts &amp; Breakdown
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-400">
+                Itemised Amounts &amp; Breakdown
+              </p>
+              {isRevision && (
+                <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                  Newly added &amp; modified items highlighted below
+                </span>
+              )}
+            </div>
             <span className="text-xs font-medium text-slate-400">
               {estimate.items.length} line item{estimate.items.length === 1 ? "" : "s"} included
             </span>
@@ -153,7 +196,7 @@ export function CustomerEstimateCard({
             <table className="w-full min-w-[620px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-slate-200 text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">
-                  <th className="py-3 font-black">Type</th>
+                  <th className="py-3 font-black">Type / Change</th>
                   <th className="py-3 font-black">Description</th>
                   <th className="py-3 font-black">Warranty</th>
                   <th className="py-3 text-center font-black">Qty</th>
@@ -165,24 +208,53 @@ export function CustomerEstimateCard({
                 {estimate.items.map((item) => {
                   const { title, subtitle } = splitDescription(item.description);
                   const isPart = item.type === "PART";
+                  const isNew = item.changeStatus === "NEW";
+                  const isModified = item.changeStatus === "MODIFIED";
+
                   return (
-                    <tr key={item.id} className="text-xs">
+                    <tr
+                      key={item.id}
+                      className={`text-xs transition-colors ${
+                        isNew
+                          ? "bg-emerald-50/70 border-l-4 border-l-emerald-500"
+                          : isModified
+                          ? "bg-amber-50/70 border-l-4 border-l-amber-500"
+                          : ""
+                      }`}
+                    >
                       <td className="py-4 pr-3 align-top">
-                        <span
-                          className={`inline-flex rounded-md px-2.5 py-1 text-[10px] font-black uppercase ${
-                            isPart
-                              ? "bg-purple-50 text-purple-700"
-                              : "bg-cyan-50 text-cyan-700"
-                          }`}
-                        >
-                          {isPart ? "Part" : "Labour"}
-                        </span>
+                        <div className="flex flex-col items-start gap-1.5">
+                          <span
+                            className={`inline-flex rounded-md px-2.5 py-1 text-[10px] font-black uppercase ${
+                              isPart
+                                ? "bg-purple-50 text-purple-700"
+                                : "bg-cyan-50 text-cyan-700"
+                            }`}
+                          >
+                            {isPart ? "Part" : "Labour"}
+                          </span>
+                          {isNew && (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-sm">
+                              <Sparkles className="h-2.5 w-2.5" /> NEW IN REVISION
+                            </span>
+                          )}
+                          {isModified && (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-amber-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-sm">
+                              MODIFIED
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-4 pr-4 align-top">
                         <p className="font-bold text-slate-900">{title}</p>
                         {subtitle && (
                           <p className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500">
                             {subtitle}
+                          </p>
+                        )}
+                        {isNew && (
+                          <p className="mt-1 text-[10px] font-bold text-emerald-700">
+                            + Newly added line item in Version {estimate.versionNumber}
                           </p>
                         )}
                       </td>
@@ -322,7 +394,9 @@ export function CustomerEstimateCard({
               <p className="mt-0.5 text-xs font-semibold leading-5 text-slate-600">
                 {isApproved
                   ? "Thank you for authorizing this repair. Our engineering team has been notified and work is underway."
-                  : "You have declined this estimate version. Our customer support team will contact you regarding next steps."}
+                  : estimate.previouslyApprovedEstimate
+                    ? `You declined this revision. Repair work will proceed under your previously approved Version ${estimate.previouslyApprovedEstimate.versionNumber} (${estimate.currency} ${formatMoney(estimate.previouslyApprovedEstimate.total)}).`
+                    : "You have declined this estimate version. Our customer support team will contact you regarding next steps."}
               </p>
             </div>
           </div>
