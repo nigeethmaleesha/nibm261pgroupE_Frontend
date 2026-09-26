@@ -10,6 +10,7 @@ export type CustomerEstimateItem = {
   unitPrice: string;
   lineTotalMinor: number;
   lineTotal: string;
+  changeStatus?: "NEW" | "MODIFIED" | "UNCHANGED";
 };
 
 export type CustomerEstimateDecisionState =
@@ -31,6 +32,17 @@ export type CustomerEstimate = {
   isLatest: boolean;
   isSuperseded: boolean;
   canDecide: boolean;
+  isRevision?: boolean;
+  revisionReason?: string | null;
+  changeReason?: string | null;
+  previousVersionNumber?: number | null;
+  previouslyApprovedEstimate?: {
+    versionNumber: number;
+    total: string;
+    totalMinor?: number;
+    status: string;
+    approvedAt?: string | null;
+  } | null;
   decision: {
     action: "APPROVED" | "REJECTED";
     decidedAt: string | null;
@@ -62,4 +74,22 @@ export type EstimateDecisionResponse = {
   message: string;
   jobStatus: string;
   estimateStatus: string;
+};
+
+export type EstimateVersionHistoryItem = CustomerEstimate & {
+  isCurrent: boolean;
+  changeReason?: string | null;
+  supersededBy?: string | null;
+  supersededAt?: string | null;
+};
+
+export type EstimateHistoryResponse = {
+  job: {
+    id: string;
+    reference: string;
+    status: string;
+    revision: number;
+  };
+  currentVersionNumber: number | null;
+  versions: EstimateVersionHistoryItem[];
 };

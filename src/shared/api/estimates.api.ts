@@ -13,7 +13,12 @@ export function getCurrentEstimate(jobIdentifier: string) {
 
 export function submitEstimateDecision(
   jobIdentifier: string,
-  payload: { action: "APPROVE" | "REJECT"; versionNumber: number; total: string },
+  payload: {
+    action: "APPROVE" | "REJECT";
+    estimateId: string;
+    versionNumber: number;
+    total: string;
+  },
 ) {
   return requestJson<EstimateDecisionResponse>(
     `/jobs/${encodeURIComponent(jobIdentifier.trim())}/estimate-decision`,
@@ -21,5 +26,12 @@ export function submitEstimateDecision(
       method: "POST",
       body: JSON.stringify(payload),
     },
+  );
+}
+
+export function getEstimateHistory(jobIdentifier: string) {
+  return requestJson<import("@/src/shared/types/estimates").EstimateHistoryResponse>(
+    `/jobs/${encodeURIComponent(jobIdentifier.trim())}/estimates/history`,
+    { method: "GET" },
   );
 }
