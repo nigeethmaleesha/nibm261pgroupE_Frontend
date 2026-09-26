@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Bell, ChevronDown, FileText, LogOut, Menu, UserRound, Wrench, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Bell, ChevronDown, ClipboardList, FileText, LogOut, Menu, Wrench, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/src/shared/auth/AuthProvider";
 import { BrandLogo } from "@/src/shared/ui/BrandLogo";
@@ -10,6 +10,7 @@ import { useToast } from "@/src/shared/ui/ToastProvider";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const toast = useToast();
   const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -69,7 +70,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
       <div className="mx-auto flex max-w-[1440px] pt-[72px]">
         <aside className="fixed bottom-0 top-[72px] z-30 hidden w-[248px] border-r border-slate-200/80 bg-white px-4 py-6 lg:block">
-          <NavContent onLogout={handleLogout} loggingOut={isLoggingOut} />
+          <NavContent onLogout={handleLogout} loggingOut={isLoggingOut} pathname={pathname} />
         </aside>
 
         {mobileOpen && (
@@ -82,7 +83,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <NavContent onLogout={handleLogout} loggingOut={isLoggingOut} />
+              <NavContent onLogout={handleLogout} loggingOut={isLoggingOut} pathname={pathname} />
             </aside>
           </div>
         )}
@@ -95,24 +96,36 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function NavContent({ onLogout, loggingOut }: { onLogout: () => void; loggingOut: boolean }) {
+function NavContent({ onLogout, loggingOut, pathname }: { onLogout: () => void; loggingOut: boolean; pathname: string }) {
+  // exact=true → only highlight when path is identical so /repair-jobs doesn't
+  // stay active while on /repair-jobs/estimate.
+  const isActive = (href: string, exact = false) =>
+    exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
+
+  const navItem = (href: string, icon: React.ReactNode, label: string, exact = false) => {
+    const active = isActive(href, exact);
+    return (
+      <Link
+        href={href}
+        className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-extrabold transition ${
+          active
+            ? "bg-blue-600 text-white shadow-[0_10px_24px_rgba(37,99,235,0.2)]"
+            : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+        }`}
+      >
+        {icon}
+        {label}
+      </Link>
+    );
+  };
+
   return (
     <div className="flex h-full flex-col">
       <nav className="space-y-2">
         <div className="mb-3 px-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Customer workspace</div>
-        <div className="flex items-center gap-3 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-extrabold text-white shadow-[0_10px_24px_rgba(37,99,235,0.2)]">
-          <Wrench className="h-4.5 w-4.5" />
-          Dashboard
-        </div>
-        <Link href="/repair-jobs/estimate" className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-extrabold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">
-          <FileText className="h-4.5 w-4.5" />
-          Current estimate
-        </Link>
-        <div className="flex cursor-default items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-slate-400">
-          <UserRound className="h-4.5 w-4.5" />
-          My repair jobs
-          <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide">Soon</span>
-        </div>
+        {navItem("/dashboard", <Wrench className="h-4.5 w-4.5" />, "Dashboard")}
+        {navItem("/repair-jobs", <ClipboardList className="h-4.5 w-4.5" />, "My repair jobs", true)}
+        {navItem("/repair-jobs/estimate", <FileText className="h-4.5 w-4.5" />, "Current estimate")}
       </nav>
 
       <div className="mt-auto border-t border-slate-100 pt-4">
