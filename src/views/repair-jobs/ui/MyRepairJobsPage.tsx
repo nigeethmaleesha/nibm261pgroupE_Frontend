@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  Activity,
   AlertCircle,
   ArrowRight,
   CheckCircle2,
@@ -21,6 +22,7 @@ import { ProtectedRoute } from "@/src/shared/auth/ProtectedRoute";
 import { DashboardShell } from "@/src/widgets/dashboard/ui/DashboardShell";
 import { useAuth } from "@/src/shared/auth/AuthProvider";
 import { getMyJobs } from "@/src/shared/api/repairJobs.api";
+import { PROGRESS_VISIBLE_STATUSES } from "@/src/shared/types/progressUpdates";
 import type {
   CustomerRepairJobListItem,
   RepairJobStatus,
@@ -177,6 +179,32 @@ function JobRow({ job }: { job: CustomerRepairJobListItem }) {
             <Edit3 className="h-3.5 w-3.5" />
             Review Estimate
           </Link>
+        ) : PROGRESS_VISIBLE_STATUSES.includes(job.status) ? (
+          <div className="inline-flex items-center gap-3">
+            <Link
+              id={`track-progress-${job.reference}`}
+              href={`/repair-jobs/${encodeURIComponent(job.reference)}/progress`}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[12px] font-extrabold transition ${
+                isInactive
+                  ? "border border-slate-200 text-slate-400 hover:text-slate-500"
+                  : "bg-violet-600 text-white shadow-[0_4px_12px_rgba(124,58,237,0.25)] hover:bg-violet-700"
+              }`}
+            >
+              <Activity className="h-3.5 w-3.5" />
+              Track Progress
+            </Link>
+            <Link
+              id={`view-details-${job.reference}`}
+              href={`/repair-jobs/${encodeURIComponent(job.reference)}/estimate`}
+              className={`inline-flex items-center gap-1 text-[12px] font-bold transition ${
+                isInactive
+                  ? "text-slate-400 hover:text-slate-500"
+                  : "text-blue-600 hover:text-blue-700"
+              }`}
+            >
+              Details <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         ) : (
           <Link
             id={`view-details-${job.reference}`}
