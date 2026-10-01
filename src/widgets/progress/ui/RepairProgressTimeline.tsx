@@ -1,7 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Activity, AlertCircle, Loader2, PencilLine, RefreshCw, Wrench } from "lucide-react";
+import {
+  Activity,
+  AlertCircle,
+  Loader2,
+  PackageCheck,
+  PackageClock,
+  PencilLine,
+  RefreshCw,
+  Wrench,
+} from "lucide-react";
 import { getRepairProgressUpdates } from "@/src/shared/api/progressUpdates.api";
 import { ApiError } from "@/src/shared/api/http";
 import type { CustomerProgressUpdatesResponse } from "@/src/shared/types/progressUpdates";
@@ -106,6 +115,43 @@ export function RepairProgressTimeline({ jobIdentifier }: RepairProgressTimeline
             <span>{error}</span>
           </div>
         )}
+
+        {data?.job.partsHold.active && (
+          <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-amber-950">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                <PackageClock className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <p className="text-sm font-black">Repair is waiting for a required part</p>
+                {data.job.partsHold.requiredPart && (
+                  <p className="mt-1 text-xs font-bold text-amber-900">
+                    Required part: {data.job.partsHold.requiredPart}
+                  </p>
+                )}
+                <p className="mt-1 text-xs font-semibold leading-5 text-amber-800">
+                  {data.job.partsHold.reason ||
+                    "Repair work is temporarily paused while the required part is arranged."}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {data &&
+          !data.job.partsHold.active &&
+          data.job.status === "Waiting for Parts" &&
+          data.job.partsHold.releasedAt && (
+            <div className="mb-5 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-emerald-950">
+              <PackageCheck className="mt-0.5 h-4.5 w-4.5 shrink-0 text-emerald-600" />
+              <div>
+                <p className="text-sm font-black">Required parts have arrived</p>
+                <p className="mt-1 text-xs font-semibold leading-5 text-emerald-800">
+                  The parts delay has been cleared. The technician will explicitly resume the repair before the status changes back to In Repair.
+                </p>
+              </div>
+            </div>
+          )}
 
         {data && updates.length === 0 && !error && (
           <div className="flex flex-col items-center py-8 text-center">

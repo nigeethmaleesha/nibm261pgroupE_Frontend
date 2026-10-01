@@ -25,6 +25,13 @@ export type CustomerProgressUpdatesResponse = {
   job: {
     reference: string;
     status: RepairJobStatus;
+    partsHold: {
+      active: boolean;
+      requiredPart: string | null;
+      reason: string | null;
+      placedAt: string | null;
+      releasedAt: string | null;
+    };
   };
   updates: CustomerProgressUpdate[];
 };
