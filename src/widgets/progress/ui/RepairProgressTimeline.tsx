@@ -6,7 +6,7 @@ import {
   AlertCircle,
   Loader2,
   PackageCheck,
-  PackageClock,
+  ClockAlert,
   PencilLine,
   RefreshCw,
   Wrench,
@@ -120,7 +120,7 @@ export function RepairProgressTimeline({ jobIdentifier }: RepairProgressTimeline
           <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-amber-950">
             <div className="flex items-start gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
-                <PackageClock className="h-4.5 w-4.5" />
+                <ClockAlert className="h-4.5 w-4.5" />
               </div>
               <div>
                 <p className="text-sm font-black">Repair is waiting for a required part</p>
