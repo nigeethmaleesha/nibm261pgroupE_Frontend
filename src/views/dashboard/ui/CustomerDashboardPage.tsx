@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ClipboardList,
   FileText,
+  RotateCcw,
   ShieldCheck,
   Wrench,
 } from "lucide-react";
@@ -48,6 +49,7 @@ function DashboardContent() {
   const activeCount    = jobs.filter((j) => !INACTIVE.includes(j.status)).length;
   const awaitingCount  = jobs.filter((j) => AWAITING.includes(j.status)).length;
   const completedCount = jobs.filter((j) => j.status === "Collected").length;
+  const readyForReturnJobs = jobs.filter((j) => j.status === "Ready for Return");
 
   const statValue = (n: number) => (isLoading ? "—" : String(n));
 
@@ -82,6 +84,36 @@ function DashboardContent() {
             </div>
           </div>
         </section>
+
+        {/* SCRUM-117: Ready for Return Customer Notification Banner */}
+        {!isLoading && readyForReturnJobs.length > 0 && (
+          <div className="mt-7 flex items-start gap-4 rounded-[24px] border-2 border-amber-300 bg-amber-50/95 p-5 shadow-[0_8px_24px_rgba(245,158,11,0.12)]">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-sm">
+              <RotateCcw className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-amber-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+                  Ready for Pickup (Unrepaired)
+                </span>
+                <span className="text-[12px] font-bold text-amber-900">
+                  {readyForReturnJobs.length} device{readyForReturnJobs.length > 1 ? "s" : ""} prepared for pickup
+                </span>
+              </div>
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-amber-900 sm:text-sm">
+                Your device ({readyForReturnJobs.map((j) => `${j.reference} - ${j.makeModel}`).join(", ")}) is ready for pickup without repair at our service centre. Please bring your reference code and a valid photo ID.
+              </p>
+              <div className="mt-3">
+                <Link
+                  href="/repair-jobs"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-3.5 py-1.5 text-[11px] font-extrabold text-white shadow-sm hover:bg-amber-700"
+                >
+                  View Pickup Details →
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Stat cards ── */}
         <div className="mt-7 grid gap-5 md:grid-cols-3">
@@ -161,11 +193,12 @@ function DashboardContent() {
                     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-extrabold ${
                       job.status === "Awaiting Approval"   ? "bg-amber-50 text-amber-700"
                       : job.status === "Ready for Collection" ? "bg-emerald-50 text-emerald-700"
+                      : job.status === "Ready for Return"     ? "bg-amber-100 text-amber-900 border border-amber-300 font-black"
                       : job.status === "Collected"            ? "bg-slate-100 text-slate-500"
                       : "bg-blue-50 text-blue-700"
                     }`}>
                       <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                      {job.status}
+                      {job.status === "Ready for Return" ? "Ready for Pickup (Unrepaired)" : job.status}
                     </span>
                   </Link>
                 ))}
