@@ -104,6 +104,22 @@ POST /auth/forgot-password/resend-otp
 
 The reset token is intentionally stored only in tab-scoped `sessionStorage`, not persistent `localStorage`, and is deleted after a successful password change.
 
-## Dashboard/current-estimate dependency
+## Dashboard & Completed Repair Records (SCRUM-125)
 
-The dashboard authenticates against `GET /auth/me`. Repair-job and estimate data are not mocked as real records. When the team's job/estimate endpoints are finalized, connect them through new functions in `src/shared/api/` and render them in the dashboard widgets without changing the authentication layer.
+The dashboard authenticates against `GET /auth/me`. Active jobs are retrieved from `GET /customer/my-jobs`, and past completed repairs are fetched from `GET /customer/jobs/history`:
+
+```text
+GET /customer/jobs/history
+Accept: application/json
+Credentials: include (HttpOnly session cookies)
+```
+
+The response provides all completed repair records with:
+- `reference`, `device` (brand, model, serialNumber), `reportedFault`
+- `status` ("Collected")
+- `outcome` ("repaired" | "unrepaired") & `outcomeDisplay`
+- `outcomeDescription`
+- `collectedAt` / `collectionTime`
+- `publicRepairSummary` (or `returnReason` / `returnNotes`)
+- `latestEstimate` & `estimateHistory` with itemized amounts breakdown and customer decision details
+

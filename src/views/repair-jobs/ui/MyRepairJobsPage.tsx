@@ -400,26 +400,30 @@ function MyRepairJobsContent() {
               <div className="absolute inset-y-4 right-0 hidden w-px bg-slate-100 sm:block" />
             </div>
 
-            {/* Collected Jobs */}
-            <div className="flex items-start justify-between border-t border-slate-100 px-6 py-5 sm:border-t-0">
+            {/* Collected Jobs (SCRUM-125) */}
+            <Link
+              href="/dashboard?tab=past-repairs"
+              className="group flex items-start justify-between border-t border-slate-100 px-6 py-5 transition hover:bg-slate-50/80 sm:border-t-0"
+              title="View Past Repairs Archive & Receipts"
+            >
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
                   Collected Jobs
                 </p>
-                <p className="mt-2 text-[36px] font-black leading-none tracking-[-0.05em] text-slate-900">
+                <p className="mt-2 text-[36px] font-black leading-none tracking-[-0.05em] text-slate-900 transition-colors group-hover:text-blue-600">
                   {collectedCount}
                 </p>
                 <p className="mt-1.5 text-[11px] font-semibold text-slate-400">
                   archived device{collectedCount !== 1 ? "s" : ""}
                 </p>
                 <p className="mt-1 flex items-center gap-1 text-[11px] font-bold text-emerald-600">
-                  <CheckCircle2 className="h-3 w-3" /> 90-day parts warranty valid
+                  <CheckCircle2 className="h-3 w-3" /> View Past Repairs Archive →
                 </p>
               </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-500">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-500 transition-colors group-hover:bg-emerald-100">
                 <CheckCircle2 className="h-5 w-5" />
               </div>
-            </div>
+            </Link>
           </div>
         )}
 
