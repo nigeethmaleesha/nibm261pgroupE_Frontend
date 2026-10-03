@@ -13,6 +13,7 @@ import {
   MapPin,
   PackageCheck,
   ClockAlert,
+  RotateCcw,
   ShieldCheck,
   Store,
   Wrench,
@@ -204,7 +205,7 @@ export function RepairContextualCTA({
           className={`relative overflow-hidden rounded-[24px] border-2 p-5 sm:p-6 ${
             isSuccess
               ? "border-emerald-300 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-emerald-500/15 shadow-[0_12px_36px_rgba(16,185,129,0.12)]"
-              : "border-teal-300 bg-gradient-to-br from-teal-500/10 to-slate-50 shadow-[0_12px_36px_rgba(20,184,166,0.12)]"
+              : "border-amber-300 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-slate-50 shadow-[0_12px_36px_rgba(245,158,11,0.12)]"
           }`}
         >
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -213,28 +214,28 @@ export function RepairContextualCTA({
                 className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white shadow-md ${
                   isSuccess
                     ? "bg-emerald-600 shadow-emerald-600/30"
-                    : "bg-teal-600 shadow-teal-600/30"
+                    : "bg-amber-600 shadow-amber-600/30"
                 }`}
               >
-                {isSuccess ? <PackageCheck className="h-6 w-6" /> : <Store className="h-6 w-6" />}
+                {isSuccess ? <PackageCheck className="h-6 w-6" /> : <RotateCcw className="h-6 w-6" />}
               </div>
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <span
                     className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white ${
-                      isSuccess ? "bg-emerald-600" : "bg-teal-600"
+                      isSuccess ? "bg-emerald-600" : "bg-amber-600"
                     }`}
                   >
-                    Ready for Pickup
+                    {isSuccess ? "Ready for Collection" : "Ready for Pickup (Unrepaired)"}
                   </span>
-                  <span className="text-[11px] font-bold text-emerald-800">
-                    Service Centre Handover
+                  <span className={`text-[11px] font-bold ${isSuccess ? "text-emerald-800" : "text-amber-800"}`}>
+                    {isSuccess ? "Service Centre Handover" : "Unrepaired Return Handover"}
                   </span>
                 </div>
                 <h3 className="mt-1 text-base font-black text-slate-900 sm:text-lg">
                   {isSuccess
                     ? "Your Device Repair is Complete & Ready for Collection! 🎉"
-                    : "Your Device is Ready for Return"}
+                    : "Your Device is Ready for Pickup (Unrepaired)"}
                 </h3>
                 <p className="mt-1 max-w-xl text-xs font-semibold leading-relaxed text-slate-700 sm:text-sm">
                   {handoverInstruction ||
@@ -251,7 +252,7 @@ export function RepairContextualCTA({
                 className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-xs font-black text-white shadow-lg transition-all active:scale-[0.98] sm:w-auto ${
                   isSuccess
                     ? "bg-emerald-600 shadow-emerald-600/25 hover:bg-emerald-700 hover:shadow-emerald-600/40"
-                    : "bg-teal-600 shadow-teal-600/25 hover:bg-teal-700"
+                    : "bg-amber-600 shadow-amber-600/25 hover:bg-amber-700"
                 }`}
               >
                 <Store className="h-4 w-4" />

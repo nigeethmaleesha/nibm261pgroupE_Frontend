@@ -16,6 +16,7 @@ import {
   Monitor,
   PackageSearch,
   RefreshCw,
+  RotateCcw,
   ShieldCheck,
 } from "lucide-react";
 import { ProtectedRoute } from "@/src/shared/auth/ProtectedRoute";
@@ -51,11 +52,19 @@ const STATUS_CFG: Record<RepairJobStatus, BadgeCfg> = {
   "In Repair":           { bg: "bg-violet-50",   dot: "bg-violet-500",  text: "text-violet-700"  },
   "Waiting for Parts":   { bg: "bg-blue-50",     dot: "bg-blue-500",    text: "text-blue-700"    },
   "Ready for Collection":{ bg: "bg-emerald-50",  dot: "bg-emerald-500", text: "text-emerald-700"  },
-  "Ready for Return":    { bg: "bg-teal-50",     dot: "bg-teal-500",    text: "text-teal-700"    },
+  "Ready for Return":    { bg: "bg-amber-100",   dot: "bg-amber-600",   text: "text-amber-900"    },
   Collected:             { bg: "bg-slate-100",   dot: "bg-slate-400",   text: "text-slate-500"   },
 };
 
 function StatusBadge({ status }: { status: RepairJobStatus }) {
+  if (status === "Ready for Return") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-100/90 px-2.5 py-1 text-[11px] font-extrabold text-amber-900 shadow-xs">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-600 animate-pulse" />
+        Ready for Pickup (Unrepaired)
+      </span>
+    );
+  }
   const cfg = STATUS_CFG[status] ?? { bg: "bg-slate-100", dot: "bg-slate-400", text: "text-slate-600" };
   return (
     <span
@@ -263,6 +272,7 @@ function MyRepairJobsContent() {
   const actionCount   = jobs.filter((j) => REQUIRES_ACTION.includes(j.status)).length;
   const collectedCount = jobs.filter((j) => j.status === "Collected").length;
   const progressCount = jobs.filter((j) => IN_PROGRESS.includes(j.status)).length;
+  const readyForReturnJobs = jobs.filter((j) => j.status === "Ready for Return");
 
   // Filtered rows
   const filtered =
@@ -308,6 +318,28 @@ function MyRepairJobsContent() {
             </div>
           </div>
         </div>
+
+        {/* SCRUM-117: Ready for Return Customer Notification Banner */}
+        {!isLoading && !error && readyForReturnJobs.length > 0 && (
+          <div className="flex items-start gap-4 rounded-2xl border-2 border-amber-300 bg-amber-50/90 p-4 shadow-[0_4px_16px_rgba(245,158,11,0.12)]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-sm">
+              <RotateCcw className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-amber-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+                  Ready for Pickup (Unrepaired)
+                </span>
+                <span className="text-[12px] font-bold text-amber-900">
+                  {readyForReturnJobs.length} device{readyForReturnJobs.length > 1 ? "s" : ""} prepared for pickup
+                </span>
+              </div>
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-amber-900">
+                Your device ({readyForReturnJobs.map((j) => `${j.reference} - ${j.makeModel}`).join(", ")}) is ready for customer pickup without repair. Please visit our service centre with your reference code and a valid photo ID.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ── Summary cards ── */}
         {!isLoading && !error && (

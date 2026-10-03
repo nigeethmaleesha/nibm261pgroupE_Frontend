@@ -198,6 +198,21 @@ function RepairProgressContent() {
                       <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-blue-700">
                         {job?.deviceType || "Device"}
                       </span>
+                      {isReturn ? (
+                        <span className="rounded-full border border-amber-300 bg-amber-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-900">
+                          Ready for Pickup (Unrepaired)
+                        </span>
+                      ) : (
+                        <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                          currentStatus === "Ready for Collection"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : currentStatus === "Awaiting Approval"
+                            ? "bg-amber-100 text-amber-800"
+                            : "bg-slate-100 text-slate-700"
+                        }`}>
+                          {currentStatus}
+                        </span>
+                      )}
                       {job?.serialNumber && (
                         <span className="text-[11px] font-mono font-semibold text-slate-400">
                           S/N: {job.serialNumber}
