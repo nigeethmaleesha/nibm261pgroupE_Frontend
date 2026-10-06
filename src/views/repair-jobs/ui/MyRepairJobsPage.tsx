@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  Activity,
   AlertCircle,
   ArrowRight,
   CheckCircle2,
@@ -15,12 +16,14 @@ import {
   Monitor,
   PackageSearch,
   RefreshCw,
+  RotateCcw,
   ShieldCheck,
 } from "lucide-react";
 import { ProtectedRoute } from "@/src/shared/auth/ProtectedRoute";
 import { DashboardShell } from "@/src/widgets/dashboard/ui/DashboardShell";
 import { useAuth } from "@/src/shared/auth/AuthProvider";
 import { getMyJobs } from "@/src/shared/api/repairJobs.api";
+import { PROGRESS_VISIBLE_STATUSES } from "@/src/shared/types/progressUpdates";
 import type {
   CustomerRepairJobListItem,
   RepairJobStatus,
@@ -49,11 +52,19 @@ const STATUS_CFG: Record<RepairJobStatus, BadgeCfg> = {
   "In Repair":           { bg: "bg-violet-50",   dot: "bg-violet-500",  text: "text-violet-700"  },
   "Waiting for Parts":   { bg: "bg-blue-50",     dot: "bg-blue-500",    text: "text-blue-700"    },
   "Ready for Collection":{ bg: "bg-emerald-50",  dot: "bg-emerald-500", text: "text-emerald-700"  },
-  "Ready for Return":    { bg: "bg-teal-50",     dot: "bg-teal-500",    text: "text-teal-700"    },
+  "Ready for Return":    { bg: "bg-amber-100",   dot: "bg-amber-600",   text: "text-amber-900"    },
   Collected:             { bg: "bg-slate-100",   dot: "bg-slate-400",   text: "text-slate-500"   },
 };
 
 function StatusBadge({ status }: { status: RepairJobStatus }) {
+  if (status === "Ready for Return") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-100/90 px-2.5 py-1 text-[11px] font-extrabold text-amber-900 shadow-xs">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-600 animate-pulse" />
+        Ready for Pickup (Unrepaired)
+      </span>
+    );
+  }
   const cfg = STATUS_CFG[status] ?? { bg: "bg-slate-100", dot: "bg-slate-400", text: "text-slate-600" };
   return (
     <span
@@ -177,6 +188,32 @@ function JobRow({ job }: { job: CustomerRepairJobListItem }) {
             <Edit3 className="h-3.5 w-3.5" />
             Review Estimate
           </Link>
+        ) : PROGRESS_VISIBLE_STATUSES.includes(job.status) ? (
+          <div className="inline-flex items-center gap-3">
+            <Link
+              id={`track-progress-${job.reference}`}
+              href={`/repair-jobs/${encodeURIComponent(job.reference)}/progress`}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[12px] font-extrabold transition ${
+                isInactive
+                  ? "border border-slate-200 text-slate-400 hover:text-slate-500"
+                  : "bg-violet-600 text-white shadow-[0_4px_12px_rgba(124,58,237,0.25)] hover:bg-violet-700"
+              }`}
+            >
+              <Activity className="h-3.5 w-3.5" />
+              Track Progress
+            </Link>
+            <Link
+              id={`view-details-${job.reference}`}
+              href={`/repair-jobs/${encodeURIComponent(job.reference)}/estimate`}
+              className={`inline-flex items-center gap-1 text-[12px] font-bold transition ${
+                isInactive
+                  ? "text-slate-400 hover:text-slate-500"
+                  : "text-blue-600 hover:text-blue-700"
+              }`}
+            >
+              Details <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         ) : (
           <Link
             id={`view-details-${job.reference}`}
@@ -235,6 +272,7 @@ function MyRepairJobsContent() {
   const actionCount   = jobs.filter((j) => REQUIRES_ACTION.includes(j.status)).length;
   const collectedCount = jobs.filter((j) => j.status === "Collected").length;
   const progressCount = jobs.filter((j) => IN_PROGRESS.includes(j.status)).length;
+  const readyForReturnJobs = jobs.filter((j) => j.status === "Ready for Return");
 
   // Filtered rows
   const filtered =
@@ -280,6 +318,28 @@ function MyRepairJobsContent() {
             </div>
           </div>
         </div>
+
+        {/* SCRUM-117: Ready for Return Customer Notification Banner */}
+        {!isLoading && !error && readyForReturnJobs.length > 0 && (
+          <div className="flex items-start gap-4 rounded-2xl border-2 border-amber-300 bg-amber-50/90 p-4 shadow-[0_4px_16px_rgba(245,158,11,0.12)]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-sm">
+              <RotateCcw className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-amber-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+                  Ready for Pickup (Unrepaired)
+                </span>
+                <span className="text-[12px] font-bold text-amber-900">
+                  {readyForReturnJobs.length} device{readyForReturnJobs.length > 1 ? "s" : ""} prepared for pickup
+                </span>
+              </div>
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-amber-900">
+                Your device ({readyForReturnJobs.map((j) => `${j.reference} - ${j.makeModel}`).join(", ")}) is ready for customer pickup without repair. Please visit our service centre with your reference code and a valid photo ID.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ── Summary cards ── */}
         {!isLoading && !error && (
@@ -340,26 +400,30 @@ function MyRepairJobsContent() {
               <div className="absolute inset-y-4 right-0 hidden w-px bg-slate-100 sm:block" />
             </div>
 
-            {/* Collected Jobs */}
-            <div className="flex items-start justify-between border-t border-slate-100 px-6 py-5 sm:border-t-0">
+            {/* Collected Jobs (SCRUM-125) */}
+            <Link
+              href="/dashboard?tab=past-repairs"
+              className="group flex items-start justify-between border-t border-slate-100 px-6 py-5 transition hover:bg-slate-50/80 sm:border-t-0"
+              title="View Past Repairs Archive & Receipts"
+            >
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
                   Collected Jobs
                 </p>
-                <p className="mt-2 text-[36px] font-black leading-none tracking-[-0.05em] text-slate-900">
+                <p className="mt-2 text-[36px] font-black leading-none tracking-[-0.05em] text-slate-900 transition-colors group-hover:text-blue-600">
                   {collectedCount}
                 </p>
                 <p className="mt-1.5 text-[11px] font-semibold text-slate-400">
                   archived device{collectedCount !== 1 ? "s" : ""}
                 </p>
                 <p className="mt-1 flex items-center gap-1 text-[11px] font-bold text-emerald-600">
-                  <CheckCircle2 className="h-3 w-3" /> 90-day parts warranty valid
+                  <CheckCircle2 className="h-3 w-3" /> View Past Repairs Archive →
                 </p>
               </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-500">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-500 transition-colors group-hover:bg-emerald-100">
                 <CheckCircle2 className="h-5 w-5" />
               </div>
-            </div>
+            </Link>
           </div>
         )}
 

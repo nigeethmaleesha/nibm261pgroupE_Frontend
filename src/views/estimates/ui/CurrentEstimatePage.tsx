@@ -34,6 +34,8 @@ import { LoadingScreen } from "@/src/shared/ui/LoadingScreen";
 import { useToast } from "@/src/shared/ui/ToastProvider";
 import { DashboardShell } from "@/src/widgets/dashboard/ui/DashboardShell";
 import { CustomerEstimateCard } from "@/src/widgets/estimates/ui/CustomerEstimateCard";
+import { RepairProgressTimeline } from "@/src/widgets/progress/ui/RepairProgressTimeline";
+import { PROGRESS_VISIBLE_STATUSES } from "@/src/shared/types/progressUpdates";
 
 export function CurrentEstimatePage() {
   return (
@@ -402,6 +404,11 @@ function CurrentEstimateContent() {
                 onApprove={() => void decide("APPROVE")}
                 onReject={() => void decide("REJECT")}
               />
+            )}
+
+            {/* Public technician progress updates once repair has started */}
+            {PROGRESS_VISIBLE_STATUSES.includes(data.job.status) && (
+              <RepairProgressTimeline jobIdentifier={data.job.reference} />
             )}
           </>
         )}
