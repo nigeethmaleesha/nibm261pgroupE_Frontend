@@ -121,7 +121,7 @@ export function PastRepairsTab() {
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-blue-700">
             <History className="h-3.5 w-3.5" />
-            SCRUM-125 Archive Records
+            Archive Records
           </div>
           <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
             Past Repairs &amp; Collection Receipts
