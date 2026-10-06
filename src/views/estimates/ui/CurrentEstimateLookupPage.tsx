@@ -37,7 +37,7 @@ function CurrentEstimateLookupContent() {
       <div className="mx-auto max-w-[920px]">
         <div className="mb-6">
           <p className="text-[11px] font-black uppercase tracking-[0.15em] text-blue-600">
-            SCRUM-15 · Customer estimate
+            Customer estimate
           </p>
           <h1 className="mt-1 text-3xl font-black tracking-[-0.04em] text-slate-950 sm:text-4xl">
             View current estimate
