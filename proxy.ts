@@ -13,33 +13,50 @@ function splitCombinedSetCookieHeader(header: string) {
   for (let index = 0; index < header.length; index += 1) {
     const remaining = header.slice(index).toLowerCase();
 
-    if (remaining.startsWith("expires=")) inExpires = true;
-    if (inExpires && header[index] === ";") inExpires = false;
+    if (remaining.startsWith("expires=")) {
+      inExpires = true;
+    }
+
+    if (inExpires && header[index] === ";") {
+      inExpires = false;
+    }
 
     if (!inExpires && header[index] === ",") {
       const candidate = header.slice(start, index).trim();
       const nextPart = header.slice(index + 1);
 
       if (/^\s*[^=;,\s]+\s*=/.test(nextPart)) {
-        if (candidate) cookies.push(candidate);
+        if (candidate) {
+          cookies.push(candidate);
+        }
+
         start = index + 1;
       }
     }
   }
 
   const finalCookie = header.slice(start).trim();
-  if (finalCookie) cookies.push(finalCookie);
+
+  if (finalCookie) {
+    cookies.push(finalCookie);
+  }
+
   return cookies;
 }
 
 function getSetCookies(headers: Headers) {
-  const getSetCookie = (headers as Headers & { getSetCookie?: () => string[] }).getSetCookie;
+  const getSetCookie = (
+    headers as Headers & {
+      getSetCookie?: () => string[];
+    }
+  ).getSetCookie;
 
   if (typeof getSetCookie === "function") {
     return getSetCookie.call(headers);
   }
 
   const combined = headers.get("set-cookie");
+
   return combined ? splitCombinedSetCookieHeader(combined) : [];
 }
 
@@ -48,27 +65,56 @@ export async function proxy(request: NextRequest) {
 
   if (!backendBaseUrl) {
     return NextResponse.json(
-      { message: "Backend API configuration is missing." },
-      { status: 500 },
+      {
+        message: "Backend API configuration is missing.",
+      },
+      {
+        status: 500,
+      },
     );
   }
 
   const { pathname, search } = request.nextUrl;
+
   const backendPath = pathname === "/api" ? "" : pathname.slice(4);
+
   const targetUrl = `${backendBaseUrl}${backendPath}${search}`;
 
+  /*
+   * Prepare headers for the server-to-server request.
+   */
   const requestHeaders = new Headers(request.headers);
+
   requestHeaders.delete("host");
   requestHeaders.delete("content-length");
 
-  // This is a server-to-server hop. Removing the browser Origin avoids making
-  // Express CORS configuration part of the local proxy path; browser CORS is
-  // already satisfied because the browser only talks to the same-origin /api.
+  /*
+   * Browser CORS does not need to be applied to this internal
+   * server-to-server hop because the browser only communicates
+   * with the same-origin /api endpoint.
+   */
   requestHeaders.delete("origin");
   requestHeaders.delete("referer");
 
-  const hasBody = request.method !== "GET" && request.method !== "HEAD";
-  const body = hasBody ? await request.arrayBuffer() : undefined;
+  /*
+   * Prevent Brotli/gzip double-decoding issues on Vercel.
+   *
+   * Without this, the backend may return Content-Encoding: br,
+   * while Node/Next.js has already decoded the body.
+   *
+   * Chrome then attempts to decode it again and produces:
+   *
+   * net::ERR_CONTENT_DECODING_FAILED
+   */
+  requestHeaders.set("accept-encoding", "identity");
+
+  const hasBody =
+    request.method !== "GET" &&
+    request.method !== "HEAD";
+
+  const body = hasBody
+    ? await request.arrayBuffer()
+    : undefined;
 
   try {
     const backendResponse = await fetch(targetUrl, {
@@ -80,10 +126,22 @@ export async function proxy(request: NextRequest) {
       signal: AbortSignal.timeout(15_000),
     });
 
+    /*
+     * These transport headers must not be copied directly because
+     * Node/Next.js may already have processed the response body.
+     */
+    const blockedResponseHeaders = new Set([
+      "set-cookie",
+      "content-encoding",
+      "content-length",
+      "transfer-encoding",
+      "connection",
+    ]);
+
     const responseHeaders = new Headers();
 
     backendResponse.headers.forEach((value, key) => {
-      if (key.toLowerCase() !== "set-cookie") {
+      if (!blockedResponseHeaders.has(key.toLowerCase())) {
         responseHeaders.set(key, value);
       }
     });
@@ -94,17 +152,27 @@ export async function proxy(request: NextRequest) {
       headers: responseHeaders,
     });
 
+    /*
+     * Forward authentication cookies separately so login,
+     * refresh-token and logout continue working.
+     */
     for (const cookie of getSetCookies(backendResponse.headers)) {
       response.headers.append("Set-Cookie", cookie);
     }
 
     return response;
   } catch (error) {
-    console.error("[RepairFlow API Proxy] Backend request failed:", error);
+    console.error(
+      "[RepairFlow API Proxy] Backend request failed:",
+      error,
+    );
 
     const timedOut =
       error instanceof Error &&
-      (error.name === "TimeoutError" || error.name === "AbortError");
+      (
+        error.name === "TimeoutError" ||
+        error.name === "AbortError"
+      );
 
     return NextResponse.json(
       {
@@ -112,7 +180,9 @@ export async function proxy(request: NextRequest) {
           ? "The RepairFlow backend took too long to respond."
           : "Unable to connect to the RepairFlow backend.",
       },
-      { status: timedOut ? 504 : 502 },
+      {
+        status: timedOut ? 504 : 502,
+      },
     );
   }
 }
